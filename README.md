@@ -1,4 +1,14 @@
-# loopback-rest
+# Loopback4
+
+## Topics
+
+- Overview. First LB4 App. LB CLI
+- DI, IoC, Context
+- Application, Sequence, Binding
+- Model, Data Sources, Repository, Controller, Relations
+- Providers, Decorators, Components, Interceptors, Middlewares
+
+____
 
 This application is generated using [LoopBack 4 CLI](https://loopback.io/doc/en/lb4/Command-line-interface.html) with the
 [initial project layout](https://loopback.io/doc/en/lb4/Loopback-application-layout.html).
