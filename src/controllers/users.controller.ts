@@ -83,6 +83,8 @@ export class UsersController {
     return this.usersRepository.find({...filter, fields: {password: false}});
   }
 
+  @authenticate(STRATEGY.BEARER)
+  @authorize({permissions: [PermissionKey.UpdateUser]})
   @patch('/users')
   @response(200, {
     description: 'Users PATCH success count',
@@ -102,6 +104,8 @@ export class UsersController {
     return this.usersRepository.updateAll(users, where);
   }
 
+  @authenticate(STRATEGY.BEARER)
+  @authorize({permissions: [PermissionKey.ViewUser]})
   @get('/users/{id}')
   @response(200, {
     description: 'Users model instance',
@@ -118,6 +122,8 @@ export class UsersController {
     return this.usersRepository.findById(id, filter);
   }
 
+  @authenticate(STRATEGY.BEARER)
+  @authorize({permissions: [PermissionKey.UpdateUser]})
   @patch('/users/{id}')
   @response(204, {
     description: 'Users PATCH success',
@@ -138,6 +144,8 @@ export class UsersController {
     await this.usersRepository.updateById(id, users);
   }
 
+  @authenticate(STRATEGY.BEARER)
+  @authorize({permissions: [PermissionKey.UpdateUser]})
   @put('/users/{id}')
   @response(204, {
     description: 'Users PUT success',
@@ -149,6 +157,8 @@ export class UsersController {
     await this.usersRepository.replaceById(id, users);
   }
 
+  @authenticate(STRATEGY.BEARER)
+  @authorize({permissions: [PermissionKey.DeleteUser]})
   @del('/users/{id}')
   @response(204, {
     description: 'Users DELETE success',
@@ -157,6 +167,8 @@ export class UsersController {
     await this.usersRepository.deleteById(id);
   }
 
+  @authenticate(STRATEGY.BEARER)
+  @authorize({permissions: [PermissionKey.DeleteUser]})
   @del('/users')
   @response(204, {
     description: 'Delete all users'
