@@ -7,6 +7,7 @@
 - Application, Sequence, Binding
 - Model, Data Sources, Repository, Controller, Relations
 - Providers, Decorators, Components, Interceptors, Middlewares
+- Authentication, Authorization with permissions, & Soft delete
 
 ____
 
