@@ -62,7 +62,8 @@ export class AuthController {
 
     try {
       const user = await this.usersRepository.findOne({
-        where: {username: credentials.username}
+        where: {username: credentials.username},
+        include: ['role']
       });
 
       if (!user) {
@@ -76,7 +77,7 @@ export class AuthController {
       }
 
       const secret: string = process.env.JWT_SECRET!;
-      const token = sign({id: user.id, username: user.username, roleId: user.roleId, sub: user.email, permissions: user.permissions}, secret)
+      const token = sign({id: user.id, username: user.username, roleId: user.roleId, sub: user.email, permissions: user.role?.permissions}, secret)
 
       return {token}
     } catch (error) {

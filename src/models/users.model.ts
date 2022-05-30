@@ -53,17 +53,6 @@ export class Users extends SoftDeleteEntity implements IAuthUser {
   })
   modifiedOn?: string;
 
-
-  // @property({
-  //   type: 'number',
-  //   required: true,
-  //   name: 'customer_id'
-  // })
-  // customerId: number;
-
-  // @belongsTo(() => Customers, {keyTo: 'id'})
-  // customer?: Customers;
-
   @property({
     type: 'string',
     jsonSchema: {
@@ -101,13 +90,6 @@ export class Users extends SoftDeleteEntity implements IAuthUser {
     name: 'auth_token',
   })
   authToken?: string;
-
-  @property({
-    type: 'array',
-    itemType: 'string',
-    name: 'permissions',
-  })
-  permissions: string[];
 
   constructor(data?: Partial<Users>) {
     super(data);

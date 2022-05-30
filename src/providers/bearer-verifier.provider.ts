@@ -16,6 +16,7 @@ export class BearerTokenVerifyProvider
       const tokenInfo = verify(token, process.env.JWT_SECRET as string);
 
       const user = await this.usersRepository.findOne({
+        include: ['role'],
         where: {
           email: tokenInfo.sub as string
         }
