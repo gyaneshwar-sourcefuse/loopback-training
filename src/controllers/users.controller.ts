@@ -12,24 +12,26 @@ import {
   getModelSchemaRef, param, patch, post, put, requestBody,
   response
 } from '@loopback/rest';
+import {authenticate, STRATEGY} from 'loopback4-authentication';
+import {authorize} from 'loopback4-authorization';
+import {PermissionKey} from '../enums/permissions.enum';
 import {log} from '../interceptors/log.interceptor';
 import {Users} from '../models';
-import {TestProvider} from '../providers/test-provider.providers';
 import {UsersRepository} from '../repositories';
 
 export class UsersController {
 
+
   constructor(
     @repository(UsersRepository)
     public usersRepository: UsersRepository,
-    @inject('test.provider')
-    protected testProvider: TestProvider,
     @inject(CoreBindings.APPLICATION_INSTANCE)
     protected app: Application
   ) { }
 
   @intercept(log)
   @post('/users')
+
   @response(200, {
     description: 'Users model instance',
     content: {'application/json': {schema: getModelSchemaRef(Users)}},
@@ -61,6 +63,8 @@ export class UsersController {
     return this.usersRepository.count(where);
   }
 
+  @authenticate(STRATEGY.BEARER)
+  @authorize({permissions: [PermissionKey.ViewUser]})
   @get('/users')
   @response(200, {
     description: 'Array of Users model instances',
@@ -76,8 +80,7 @@ export class UsersController {
   async find(
     @param.filter(Users) filter?: Filter<Users>,
   ): Promise<Users[]> {
-
-    return this.usersRepository.find(filter);
+    return this.usersRepository.find({...filter, fields: {password: false}});
   }
 
   @patch('/users')
@@ -109,7 +112,7 @@ export class UsersController {
     },
   })
   async findById(
-    @param.path.string('id') id: string,
+    @param.path.string('id') id: number,
     @param.filter(Users, {exclude: 'where'}) filter?: FilterExcludingWhere<Users>
   ): Promise<Users> {
     return this.usersRepository.findById(id, filter);
@@ -120,7 +123,7 @@ export class UsersController {
     description: 'Users PATCH success',
   })
   async updateById(
-    @param.path.string('id') id: string,
+    @param.path.string('id') id: number,
     @requestBody({
       content: {
         'application/json': {
@@ -140,7 +143,7 @@ export class UsersController {
     description: 'Users PUT success',
   })
   async replaceById(
-    @param.path.string('id') id: string,
+    @param.path.string('id') id: number,
     @requestBody() users: Users,
   ): Promise<void> {
     await this.usersRepository.replaceById(id, users);
@@ -150,7 +153,7 @@ export class UsersController {
   @response(204, {
     description: 'Users DELETE success',
   })
-  async deleteById(@param.path.string('id') id: string): Promise<void> {
+  async deleteById(@param.path.string('id') id: number): Promise<void> {
     await this.usersRepository.deleteById(id);
   }
 
@@ -161,4 +164,5 @@ export class UsersController {
   deleteAll(): Promise<Count> {
     return this.usersRepository.deleteAll();
   }
+
 }

@@ -1,35 +1,84 @@
 import {inject} from '@loopback/core';
-import {MiddlewareSequence, RequestContext, RestBindings} from '@loopback/rest';
+import {FindRoute, HttpErrors, InvokeMethod, InvokeMiddleware, ParseParams, Reject, RequestContext, RestBindings, Send, SequenceHandler} from '@loopback/rest';
+import {AuthenticateFn, AuthenticationBindings} from 'loopback4-authentication';
+import {AuthorizationBindings, AuthorizeErrorKeys, AuthorizeFn} from 'loopback4-authorization';
 import {Logger} from 'winston';
 import {LoggerComponentKeys} from './components/logger.component';
+import {Users} from './models';
 
-export class MySequence extends MiddlewareSequence {
-  @inject(LoggerComponentKeys.LOGGER.key)
-  private logger: Logger;
+export class MySequence implements SequenceHandler {
+
+  @inject(RestBindings.SequenceActions.INVOKE_MIDDLEWARE, {optional: true})
+  protected invokeMiddleware: InvokeMiddleware = () => false
+
+  constructor(
+    @inject(RestBindings.SequenceActions.FIND_ROUTE) protected findRoute: FindRoute,
+    @inject(RestBindings.SequenceActions.PARSE_PARAMS) protected parseParams: ParseParams,
+    @inject(RestBindings.SequenceActions.INVOKE_METHOD) protected invoke: InvokeMethod,
+    @inject(RestBindings.SequenceActions.SEND) public send: Send,
+    @inject(RestBindings.SequenceActions.REJECT) public reject: Reject,
+    @inject(LoggerComponentKeys.LOGGER.key) private logger: Logger,
+    @inject(AuthenticationBindings.USER_AUTH_ACTION)
+    protected authenticateRequest: AuthenticateFn<Users>,
+    @inject(AuthorizationBindings.AUTHORIZE_ACTION)
+    protected checkAuthorisation: AuthorizeFn
+  ) {
+
+  }
+
   async handle(context: RequestContext): Promise<void> {
-    const req = await context.get(RestBindings.Http.REQUEST);
-    const res = await context.get(RestBindings.Http.RESPONSE);
+    const origins = process.env?.ALLOWED_ORIGIN?.split(",");
 
-    console.log("-----------------------------------");
+    try {
+      const {request, response} = context;
+      this.start(context);
 
-    const start: any = new Date();
-    console.log("Log request start time:", start);
-    console.log("Referer:", req.headers.referer);
-    console.log("User-Agent:", req.headers['user-agent'])
-    console.log("Request IP:", req.ip)
+      if (!origins?.includes(request?.headers?.referer ?? '')) {
+        throw new Error('Origin not allowed')
+      }
 
-    // if (process.env.ALLOWED_ORIGIN !== req.headers.origin) {
-    //   res.status(400).send({statusCode: 400, message: "Bad request"});
-    //   console.log("Error time:", new Date());
-    // } else {
-    await super.handle(context);
-    // }
-    const end: any = new Date();
-    console.log("Completion time:", end);
-    console.log("-----------------------------------");
+      const finished = await this.invokeMiddleware(context);
+      if (finished) return;
 
-    this.logger.log("info", `${req.method} ${req.url}`)
+      const route = this.findRoute(request);
+      const args = await this.parseParams(request, route);
 
+
+      const authUser: Users = await this.authenticateRequest(request);
+
+      const isAccessAllowed: boolean = await this.checkAuthorisation(
+        authUser?.permissions ?? [],
+        request
+      );
+
+      if (!isAccessAllowed) {
+        this.logger.log('error', 'Not Allowed')
+        throw new HttpErrors.Forbidden(AuthorizeErrorKeys.NotAllowedAccess);
+      }
+
+      const result = await this.invoke(route, args);
+      this.send(response, result);
+
+      this.end();
+    } catch (error) {
+      this.error();
+      this.reject(context, error);
+    }
+
+  }
+
+  start(context: RequestContext) {
+    this.logger.log('info', `Start time: ${new Date()}`);
+    this.logger.log('info', `Referer: ${context.request.headers.referer}`);
+    this.logger.log('info', `User-Agent: ${context.request.headers['user-agent']}`)
+    this.logger.log('info', `IP: ${context.request.ip}`)
+  }
+
+  end() {
+    this.logger.log('info', `End time: ${new Date()}`)
+  }
+  error() {
+    this.logger.log('error', `Error time: ${new Date()}`)
   }
 
 }

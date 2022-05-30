@@ -1,26 +1,43 @@
-import {belongsTo, Entity, model, property} from '@loopback/repository';
-import {Customers} from './customers.model';
+import {Entity, model, property} from '@loopback/repository';
+import {Permissions} from 'loopback4-authorization';
+import {RolesEnum} from '../enums/roles.enum';
 
-@model()
-export class Roles extends Entity {
-  // @property({
-  //   type: 'number',
-  //   required: true,
-  // })
-  @belongsTo(() => Customers)
+@model({
+  name: 'roles'
+})
+export class Roles extends Entity implements Permissions<string> {
+
+  @property({
+    id: true,
+    generated: true,
+    type: 'number'
+  })
   id: number;
 
   @property({
     type: 'string',
-    required: true,
   })
-  name: string;
+  name?: string;
 
   @property({
     type: 'string',
-    required: true,
+    jsonSchema: {
+      enum: Object.keys(RolesEnum)
+    },
+    required: true
   })
   key: string;
+
+  @property({
+    type: 'string',
+  })
+  description?: string;
+
+  @property({
+    type: 'array',
+    itemType: 'string',
+  })
+  permissions: string[];
 
 
   constructor(data?: Partial<Roles>) {

@@ -1,5 +1,5 @@
 import {Entity, hasOne, model, property} from '@loopback/repository';
-import {Roles} from './roles.model';
+import {Users} from './users.model';
 
 @model()
 export class Customers extends Entity {
@@ -28,14 +28,8 @@ export class Customers extends Entity {
   })
   address: string;
 
-  @property({
-    type: 'number',
-    required: true
-  })
-  role_id: number;
-
-  @hasOne(() => Roles, {keyTo: 'id'})
-  role: Roles
+  @hasOne(() => Users)
+  user: Users
 
   constructor(data?: Partial<Customers>) {
     super(data);
